@@ -1,0 +1,33 @@
+# Dependencias
+node_modules/
+
+# Variables de entorno — nunca al repo
+.env
+.env.local
+.env.*.local
+
+# Build / output
+dist/
+build/
+
+# Logs
+*.log
+npm-debug.log*
+pnpm-debug.log*
+
+# Editor / OS
+.vscode/*
+!.vscode/extensions.json
+.idea/
+.DS_Store
+
+# Coverage de tests (Vitest, Fase 6)
+coverage/
+
+# Base de datos local (SQLite, Fase 6)
+*.sqlite
+*.sqlite3
+*.db
+
+# TypeScript incremental build info
+*.tsbuildinfo
