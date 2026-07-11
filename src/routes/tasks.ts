@@ -1,17 +1,52 @@
 import { Hono } from "hono";
 import { randomUUID } from "node:crypto";
+import { z, type ZodType } from "zod";
+import { zValidator } from "@hono/zod-validator";
+
+const TaskSchema = z.object({
+  id: z.uuidv4(),
+  name: z.string().min(1).max(100),
+  completed: z.boolean(),
+});
+type TaskType = z.infer<typeof TaskSchema>;
+
+const CreateTaskSchema = TaskSchema.omit({ id: true }).extend({
+  completed: z.boolean().default(false),
+});
+
+const UpdateTaskSchema = TaskSchema.omit({ id: true })
+  .partial()
+  .extend({ completed: z.boolean().optional() });
+
+const IdParamSchema = TaskSchema.pick({ id: true });
+
+const validate = <T extends ZodType>(
+  target: "json" | "param" | "query",
+  schema: T,
+) => {
+  return zValidator(target, schema, (result, c) => {
+    if (!result.success) {
+      return c.json(
+        {
+          error: "Datos invalidos",
+          details: z.flattenError(result.error),
+        },
+        400,
+      );
+    }
+  });
+};
+
+const taskList: TaskType[] = [];
 
 const tasks = new Hono();
-
-type Task = { id: string; name: string };
-let taskList: Task[] = [];
 
 tasks.get("/", (c) => {
   return c.json(taskList, 200);
 });
 
-tasks.get("/:id", (c) => {
-  const id = c.req.param("id");
+tasks.get("/:id", validate("param", IdParamSchema), (c) => {
+  const { id } = c.req.valid("param");
   const taskResponse = taskList.find((taskItem) => taskItem.id === id);
 
   if (!taskResponse) {
@@ -21,14 +56,13 @@ tasks.get("/:id", (c) => {
   return c.json(taskResponse, 200);
 });
 
-tasks.post("/", async (c) => {
-  const body = await c.req.json();
+tasks.post("/", validate("json", CreateTaskSchema), (c) => {
+  const body = c.req.valid("json");
 
-  // Podria validar la estructura del body que en sus Objects.keys tenga la key de name
-
-  const newTask = {
+  const newTask: TaskType = {
     id: randomUUID(),
     name: body.name,
+    completed: body.completed,
   };
 
   taskList.push(newTask);
@@ -36,36 +70,38 @@ tasks.post("/", async (c) => {
   return c.json(newTask, 201);
 });
 
-tasks.put("/:id", async (c) => {
-  const id = c.req.param("id");
-  const body = await c.req.json();
-  // Podria validar la estructura del body que en sus Objects.keys tenga la key de name
+tasks.patch(
+  "/:id",
+  validate("param", IdParamSchema),
+  validate("json", UpdateTaskSchema),
+  (c) => {
+    const { id } = c.req.valid("param");
+    const body = c.req.valid("json");
 
-  const taskIndex = taskList.findIndex((taskItem) => taskItem.id === id);
+    const taskIndex = taskList.findIndex((taskItem) => taskItem.id === id);
+    const currentTask = taskList[taskIndex];
 
-  if (taskIndex === -1) {
-    return c.text("NOT FOUND", 404);
-  }
+    if (!currentTask) {
+      return c.text("NOT FOUND", 404);
+    }
 
-  const newTask = {
-    id: id,
-    name: body.name,
-  };
+    taskList[taskIndex] = { ...currentTask, ...body };
 
-  taskList[taskIndex] = newTask;
+    const newTask = taskList[taskIndex];
+    return c.json(newTask, 200);
+  },
+);
 
-  return c.json(newTask, 200);
-});
-
-tasks.delete("/:id", (c) => {
-  const id = c.req.param("id");
+tasks.delete("/:id", validate("param", IdParamSchema), (c) => {
+  const { id } = c.req.valid("param");
   const taskIndex = taskList.findIndex((item) => item.id === id);
+  const currentTask = taskList[taskIndex];
 
-  if (taskIndex === -1) {
+  if (!currentTask) {
     return c.text("NOT FOUND", 404);
   }
 
-  taskList = taskList.filter((item) => item.id !== id);
+  taskList.splice(taskIndex, 1);
 
   return c.body(null, 204);
 });
