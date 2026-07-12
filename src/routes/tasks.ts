@@ -1,4 +1,5 @@
 import { Hono } from "hono";
+import { HTTPException } from "hono/http-exception";
 import { randomUUID } from "node:crypto";
 import { z, type ZodType } from "zod";
 import { zValidator } from "@hono/zod-validator";
@@ -28,7 +29,7 @@ const validate = <T extends ZodType>(
     if (!result.success) {
       return c.json(
         {
-          error: "Datos invalidos",
+          error: "Invalid data",
           details: z.flattenError(result.error),
         },
         400,
@@ -50,7 +51,7 @@ tasks.get("/:id", validate("param", IdParamSchema), (c) => {
   const taskResponse = taskList.find((taskItem) => taskItem.id === id);
 
   if (!taskResponse) {
-    return c.text("NOT FOUND", 404);
+    throw new HTTPException(404, { message: "Task not found" });
   }
 
   return c.json(taskResponse, 200);
@@ -82,7 +83,7 @@ tasks.patch(
     const currentTask = taskList[taskIndex];
 
     if (!currentTask) {
-      return c.text("NOT FOUND", 404);
+      throw new HTTPException(404, { message: "Task not found" });
     }
 
     taskList[taskIndex] = { ...currentTask, ...body };
@@ -98,7 +99,7 @@ tasks.delete("/:id", validate("param", IdParamSchema), (c) => {
   const currentTask = taskList[taskIndex];
 
   if (!currentTask) {
-    return c.text("NOT FOUND", 404);
+    throw new HTTPException(404, { message: "Task not found" });
   }
 
   taskList.splice(taskIndex, 1);
