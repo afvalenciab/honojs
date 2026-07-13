@@ -3,6 +3,10 @@ import { HTTPException } from "hono/http-exception";
 import { randomUUID } from "node:crypto";
 import { z, type ZodType } from "zod";
 import { zValidator } from "@hono/zod-validator";
+import { jwt } from "hono/jwt";
+import type { JwtVariables } from "hono/jwt";
+
+type Variables = JwtVariables<{ sub: string; role: string }>;
 
 const TaskSchema = z.object({
   id: z.uuidv4(),
@@ -40,9 +44,13 @@ const validate = <T extends ZodType>(
 
 const taskList: TaskType[] = [];
 
-const tasks = new Hono();
+const tasks = new Hono<{ Variables: Variables }>();
+tasks.use(jwt({ secret: process.env.JWT_SECRET as string, alg: "HS256" }));
 
 tasks.get("/", (c) => {
+  const payload = c.get("jwtPayload");
+
+  console.log(payload);
   return c.json(taskList, 200);
 });
 
