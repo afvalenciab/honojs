@@ -1,0 +1,29 @@
+{
+  "name": "@repo/api",
+  "version": "1.0.0",
+  "type": "module",
+  "description": "API for the Hono project",
+  "scripts": {
+    "dev": "node --watch --env-file=.env src/index.ts",
+    "start": "hono dev",
+    "build": "hono build",
+    "typecheck": "tsc --noEmit",
+    "test": "vitest"
+  },
+  "keywords": [],
+  "author": "",
+  "license": "ISC",
+  "exports": {
+    ".": "./src/app.ts"
+  },
+  "devDependencies": {
+    "@types/node": "^26.1.0",
+    "typescript": "^6.0.3"
+  },
+  "dependencies": {
+    "@hono/node-server": "^2.0.8",
+    "@hono/zod-validator": "^0.8.0",
+    "hono": "^4.12.27",
+    "zod": "^4.4.3"
+  }
+}

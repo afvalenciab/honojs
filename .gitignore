@@ -1,33 +1,60 @@
-# Dependencias
+# Dependencies
 node_modules/
 
-# Variables de entorno — nunca al repo
-.env
-.env.local
-.env.*.local
+# Package managers
+.pnpm-store/
+.npm/
+.yarn/
+.yarn/cache/
+.yarn/unplugged/
+.yarn/build-state.yml
+.yarn/install-state.gz
 
-# Build / output
+# Turborepo
+.turbo/
+
+# Build outputs
 dist/
 build/
+out/
+.next/
+coverage/
+
+# TypeScript
+*.tsbuildinfo
+
+# Environment variables
+.env
+.env.local
+.env.development.local
+.env.test.local
+.env.production.local
 
 # Logs
 *.log
 npm-debug.log*
 pnpm-debug.log*
+yarn-debug.log*
+yarn-error.log*
 
-# Editor / OS
-.vscode/*
-!.vscode/extensions.json
+# IDE
+.vscode/
 .idea/
+
+# OS
 .DS_Store
+Thumbs.db
 
-# Coverage de tests (Vitest, Fase 6)
-coverage/
+# Testing
+playwright-report/
+test-results/
 
-# Base de datos local (SQLite, Fase 6)
-*.sqlite
-*.sqlite3
-*.db
+# Cache
+.cache/
+.eslintcache
 
-# TypeScript incremental build info
-*.tsbuildinfo
+# Vercel
+.vercel/
+
+# Docker
+*.pid
