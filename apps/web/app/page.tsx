@@ -48,19 +48,22 @@ export default async function Home() {
   console.log({ tasksList });
 
   // 4. Update task
-  const updateTaskRes = await client.tasks[":id"].$patch(
-    {
-      param: { id: tasksList[0].id },
-      json: { completed: true },
-    },
-    { headers: { Authorization: `Bearer ${token}` } },
-  );
+  const taskItem = tasksList[0];
+  if (taskItem) {
+    const updateTaskRes = await client.tasks[":id"].$patch(
+      {
+        param: { id: taskItem.id },
+        json: { completed: true },
+      },
+      { headers: { Authorization: `Bearer ${token}` } },
+    );
 
-  if (updateTaskRes.ok) {
-    console.log("Tarea actualizada");
-  } else {
-    const err = await updateTaskRes.json();
-    console.log("Error al actualizar la tarea: ", err.error);
+    if (updateTaskRes.ok) {
+      console.log("Tarea actualizada");
+    } else {
+      const err = await updateTaskRes.json();
+      console.log("Error al actualizar la tarea: ", err.error);
+    }
   }
 
   return (

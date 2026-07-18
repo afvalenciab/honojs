@@ -1,83 +1,75 @@
 import { Hono } from "hono";
 import { HTTPException } from "hono/http-exception";
-import { randomUUID } from "node:crypto";
 import { validateSchema } from "../lib/validate-schemas.ts";
 import type { JwtVariablesEnv } from "../lib/jwt-variables-env.ts";
 import { validateJwt } from "../middlewares/auth.ts";
 import { requireRole } from "../middlewares/require-role.ts";
+import { db } from "../db/index.ts";
+import {
+  listTasks,
+  getTask,
+  createTask,
+  updateTask,
+  deleteTask,
+} from "../services/tasks.ts";
 
 import {
-  type TaskType,
   CreateTaskSchema,
   UpdateTaskSchema,
   IdParamSchema,
 } from "../schemas/task.ts";
 
-const taskList: TaskType[] = [];
-
 const tasks = new Hono<JwtVariablesEnv>()
   .use(validateJwt)
   .use(requireRole("ADMIN"))
-  .get("/", (c) => {
+  .get("/", async (c) => {
     const payload = c.get("jwtPayload");
-
     console.log(payload);
-    return c.json(taskList, 200);
-  })
-  .get("/:id", validateSchema("param", IdParamSchema), (c) => {
-    const { id } = c.req.valid("param");
-    const taskResponse = taskList.find((taskItem) => taskItem.id === id);
 
-    if (!taskResponse) {
+    const tasksList = await listTasks(db);
+    return c.json(tasksList, 200);
+  })
+  .get("/:id", validateSchema("param", IdParamSchema), async (c) => {
+    const { id } = c.req.valid("param");
+    const task = await getTask(db, id);
+
+    if (!task) {
       throw new HTTPException(404, { message: "Task not found" });
     }
 
-    return c.json(taskResponse, 200);
+    return c.json(task, 200);
   })
-  .post("/", validateSchema("json", CreateTaskSchema), (c) => {
+  .post("/", validateSchema("json", CreateTaskSchema), async (c) => {
     const body = c.req.valid("json");
 
-    const newTask: TaskType = {
-      id: randomUUID(),
-      name: body.name,
-      completed: body.completed,
-    };
+    const createdTask = await createTask(db, body);
 
-    taskList.push(newTask);
-
-    return c.json(newTask, 201);
+    return c.json(createdTask, 201);
   })
   .patch(
     "/:id",
     validateSchema("param", IdParamSchema),
     validateSchema("json", UpdateTaskSchema),
-    (c) => {
+    async (c) => {
       const { id } = c.req.valid("param");
       const body = c.req.valid("json");
 
-      const taskIndex = taskList.findIndex((taskItem) => taskItem.id === id);
-      const currentTask = taskList[taskIndex];
+      const updatedTask = await updateTask(db, id, body);
 
-      if (!currentTask) {
+      if (!updatedTask) {
         throw new HTTPException(404, { message: "Task not found" });
       }
-
-      const updatedTask = { ...currentTask, ...body };
-      taskList[taskIndex] = updatedTask;
 
       return c.json(updatedTask, 200);
     },
   )
-  .delete("/:id", validateSchema("param", IdParamSchema), (c) => {
+  .delete("/:id", validateSchema("param", IdParamSchema), async (c) => {
     const { id } = c.req.valid("param");
-    const taskIndex = taskList.findIndex((item) => item.id === id);
-    const currentTask = taskList[taskIndex];
+    const deletedTask = await deleteTask(db, id);
 
-    if (!currentTask) {
+    if (!deletedTask) {
       throw new HTTPException(404, { message: "Task not found" });
     }
-
-    taskList.splice(taskIndex, 1);
 
     return c.body(null, 204);
   });
