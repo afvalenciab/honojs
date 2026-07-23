@@ -5,10 +5,13 @@
   "scripts": {
     "dev": "turbo dev",
     "build": "turbo build",
-    "typecheck": "turbo typecheck"
+    "test": "turbo run test",
+    "typecheck": "turbo typecheck",
+    "prepare": "husky"
   },
   "packageManager": "pnpm@10.8.1",
   "devDependencies": {
+    "husky": "^9.1.7",
     "turbo": "^2.10.5"
   }
 }

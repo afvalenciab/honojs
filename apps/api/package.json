@@ -5,10 +5,9 @@
   "description": "API for the Hono project",
   "scripts": {
     "dev": "node --watch --env-file=.env src/index.ts",
-    "start": "hono dev",
-    "build": "hono build",
     "typecheck": "tsc --noEmit",
-    "test": "vitest",
+    "test": "vitest run --mode test",
+    "test:watch": "vitest --mode test",
     "db:generate": "drizzle-kit generate",
     "db:migrate": "drizzle-kit migrate",
     "db:studio": "drizzle-kit studio"
@@ -23,7 +22,8 @@
     "@types/node": "^26.1.0",
     "@types/pg": "^8.20.0",
     "drizzle-kit": "^0.31.10",
-    "typescript": "^6.0.3"
+    "typescript": "^6.0.3",
+    "vitest": "^4.1.10"
   },
   "dependencies": {
     "@hono/node-server": "^2.0.8",
